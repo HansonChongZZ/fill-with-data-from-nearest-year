@@ -1,4 +1,5 @@
 # 0. Preliminaries
+
 library(tidyverse)
 data <- tibble(
   country = c("Malaysia"),
@@ -10,6 +11,7 @@ data <- tibble(
   mutate(VARIABLE = if_else(year == 2015,0.54,VARIABLE)) 
 
 # 1. TASK: Fill in data for the rest of the years that are missing using data from the nearest year for which data is available
+
 have.nots <- data %>% filter(is.na(VARIABLE)) # subset of data that DOES NOT HAVE a value for the variable of interest
 haves <- data %>% filter(is.na(VARIABLE) == F) # subset of data that DOES HAVE a value for the variable of interest
 
