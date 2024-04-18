@@ -1,4 +1,4 @@
-# 0. Preliminaries
+# Preliminaries
 
 library(tidyverse)
 data <- tibble(
@@ -10,23 +10,36 @@ data <- tibble(
   mutate(VARIABLE = if_else(year == 2012,0.50,VARIABLE)) %>%
   mutate(VARIABLE = if_else(year == 2015,0.54,VARIABLE)) 
 
-# 1. TASK: Fill in data for the rest of the years that are missing using data from the nearest year for which data is available
+# TASK: Fill in data for the rest of the years that are missing using data from the nearest year for which data is available
 
-have.nots <- data %>% filter(is.na(VARIABLE)) # subset of data that DOES NOT HAVE a value for the variable of interest
-haves <- data %>% filter(is.na(VARIABLE) == F) # subset of data that DOES HAVE a value for the variable of interest
+fill_missing_values <- function(data, haves_condition, have_nots_condition, variable){
 
-get_nearest_neighbour <- function(c, y){
-  nn <- haves %>% 
-    filter(country == c) %>%
-    slice(
-      which.min(abs(haves %>% filter(country == c) %>% pull(year) - y))
-    ) %>% 
-    pull(VARIABLE)
-  return(nn[1])
+  get_nearest_neighbour <- function(c, y, variable){
+      nn <- data[haves_condition, ] %>% 
+        filter(country == c) %>%
+        slice(
+          which.min(abs(data[haves_condition, ] %>% filter(country == c) %>% pull(year) - y))
+          ) %>% 
+        pull(variable)
+      return(nn[1])
+    }
+
+  data <- full_join(
+    data[haves_condition, ],
+    data[have_nots_condition, ] %>%
+      mutate(filled_values = mapply(get_nearest_neighbour, country, year, variable)) %>% 
+      arrange(year)
+    ) 
+
+  na_indices <- is.na(data[[variable]])
+  data[[variable]][na_indices] <- data[["filled_values"]][na_indices]
+
+  return(data %>% select(-filled_values))
 }
 
-have.nots <- have.nots %>% 
-  mutate(VARIABLE = mapply(get_nearest_neighbour, country, year))
-
-data <- full_join(haves, have.nots) %>% 
-  arrange(year)
+# Trying out the function! 
+fill_missing_values(YOUR_DATA, 
+                    is.na(YOUR_DATA$YOUR_VARIABLE) == F,
+                    is.na(YOUR_DATA$YOUR_VARIABLE), 
+                    "YOUR_VARIABLE"
+                    )
